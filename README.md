@@ -1,12 +1,49 @@
 # 2024-group-15
 
 
+# Commit Regulations:
 
-## Getting started
+* Have a commit body that describes what the changes are along with issue that it is associated with(E.g: #issue_number message)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+* Message should not exceed 50 characters 
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+* Merge requests should contain what branch is being merged
+
+# Code Review Procedure:
+* It is neccessary to add comments to all sections of the code so its easier to other team members to understand
+
+* During in person meetings,members will show their code and recieve feedback. 
+
+* Feedback can include issues with readability, maintainability and potential bugs and problems with code logic.
+
+* During merge requests, a member is assigned to approve and provide feedback on the code being merged. 
+
+# Prerequisite tools:
+* Docker
+* Cmake
+* Git
+
+--Additional tools are yet to be discussed--
+
+
+# Workflow
+Our group will follow a guideline for additon of new features and resolving issues in exisiting features.
+
+-> Adding new features:
+The new feature will be discussed in team meetings. Requirements will be ellicite for the new feature. 
+The requirements for the project also follow a format **(E.g: #requirement_number : Requirement title)**. These requirements will be further split into issues which will follow the following template:
+- Title of the issue
+- User story 
+- Which requirement the issue is linked with 
+- Acceptance criteria
+
+When we are done with the issue a merge request can be raised and assigned to another group member which can approve it before merging following the template of which issue is being closed (done by default).
+
+If fix is required a new  issue is created titled with Bug and a brief description. Also, create a feature branch from it and follow the same procedure like a normal issue.
+
+
+
+
 
 ## Add your files
 
