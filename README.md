@@ -1,5 +1,7 @@
 # 2024-group-15
 
+[![pipeline status](https://git.chalmers.se/courses/dit638/students/2024-group-15/badges/main/pipeline.svg)](https://git.chalmers.se/courses/dit638/students/2024-group-15/-/pipelines)
+
 
 # Commit Regulations:
 
