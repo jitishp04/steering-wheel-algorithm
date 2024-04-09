@@ -39,7 +39,9 @@ build-and-test:
     - docker-build
   stage: build
   script:
-    - docker build -f /assignment5/Dockerfile .
+    - ls -al assignment5
+    - docker build -f assignment5/Dockerfile .
+
 
 
 # This section describes what shall be done to deploy artefacts from the project.
@@ -54,5 +56,5 @@ release:
     - docker-build
   stage: deploy
   script:
-    - docker build -f Dockerfile -t "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG" .
+    - docker build -f assignment5/Dockerfile -t "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG" .
     - docker push "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG"
