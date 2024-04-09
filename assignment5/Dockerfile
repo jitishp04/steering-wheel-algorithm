@@ -19,12 +19,11 @@ RUN apt-get install -y --no-install-recommends \
 ADD . /opt/sources
 WORKDIR /opt/sources
 
-RUN ls -al && \
-    echo "Directory contents:" && \
-    ls -al
 
 RUN cd /opt/sources && \
-    mkdir build && \
+   echo "Contents" && ls -al 
+
+RUN mkdir build && \
     cd build && \
     cmake -S /opt/sources -D CMAKE_BUILD_TYPE=Release .. && \
     make && make test && cp helloworld /tmp
