@@ -20,7 +20,7 @@ ADD . /opt/sources
 WORKDIR /opt/sources
 
 
-RUN cd /opt/sources && \
+RUN cd /opt/sources/assignment5 && \
    echo "Contents" && ls -al 
 
 RUN mkdir build && \
