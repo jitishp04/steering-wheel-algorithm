@@ -19,7 +19,8 @@ RUN apt-get install -y --no-install-recommends \
 ADD . /opt/sources
 WORKDIR /opt/sources
 
-RUN cd /opt/sources && \
+RUN docker run --rm -ti -v $PWD:/opt/sources ubuntu:22.04 /bin/bash \
+    cd /opt/sources && \
     mkdir build && \
     cd build && \
     cmake -D CMAKE_BUILD_TYPE=Release .. && \
