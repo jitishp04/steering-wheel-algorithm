@@ -22,7 +22,7 @@ WORKDIR /opt/sources
 RUN cd /opt/sources && \
     mkdir build && \
     cd build && \
-    cmake -D CMAKE_BUILD_TYPE=Release .. && \
+    cmake -S /opt/sources -D CMAKE_BUILD_TYPE=Release .. && \
     make && make test && cp helloworld /tmp
 
 ##################################################
