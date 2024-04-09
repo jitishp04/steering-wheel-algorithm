@@ -40,11 +40,20 @@ build-and-test:
   stage: build
   script:
     - docker build -f Dockerfile .
+  only: 
+    - branches
 
 # This section describes what shall be done to deploy artefacts from the project.
 release:
+  when: 
+    - on_success
   tags:
     - docker-build
+  only: 
+    ref:
+      - tags
+    variables:
+      - - $CI_COMMIT_TAG =~ /^v(\d+\.)?(\d+\.)?(\*|\d+)$/
   stage: deploy
   script:
     - docker build -f Dockerfile -t "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG" .
