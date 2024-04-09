@@ -16,8 +16,8 @@ RUN apt-get install -y --no-install-recommends \
         cmake \
         build-essential
 
-ADD . /opt/sources
-WORKDIR /opt/sources
+ADD . /opt/sources/assignment5
+WORKDIR /opt/sources/assignment5
 
 
 RUN cd /opt/sources/assignment5 && \
