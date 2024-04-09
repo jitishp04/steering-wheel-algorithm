@@ -1,6 +1,9 @@
 ##################################################
 # Section 1: Build the application
 FROM ubuntu:22.04 as builder
+RUN apt-get update && \
+    apt-get install -y gnupg
+
 RUN apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C
 MAINTAINER Christian Berger christian.berger@gu.se
 
