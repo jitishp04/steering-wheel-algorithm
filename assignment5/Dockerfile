@@ -19,6 +19,10 @@ RUN apt-get install -y --no-install-recommends \
 ADD . /opt/sources
 WORKDIR /opt/sources
 
+RUN ls -al && \
+    echo "Directory contents:" && \
+    ls -al
+
 RUN cd /opt/sources && \
     mkdir build && \
     cd build && \
