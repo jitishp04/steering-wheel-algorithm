@@ -21,9 +21,7 @@ WORKDIR /opt/sources/assignment5
 
 
 RUN cd /opt/sources/assignment5 && \
-   echo "Contents" && ls -al 
-
-RUN mkdir build && \
+    mkdir build && \
     cd build && \
     cmake -S /opt/sources -D CMAKE_BUILD_TYPE=Release .. && \
     make && make test && cp helloworld /tmp
