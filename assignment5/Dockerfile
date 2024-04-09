@@ -19,16 +19,9 @@ RUN apt-get install -y --no-install-recommends \
 ADD . /opt/sources/assignment5
 WORKDIR /opt/sources/assignment5
 
-RUN pwd && \
-    echo "Contents of /opt/sources:" && \
-    ls -al && \
-    cd assignment5 && \
-    pwd && \
-    echo "Contents of /opt/sources/assignment5:" && \
-    ls -al
 
-RUN mkdir -p /opt/sources/assignment5/build && \
-    cd /opt/sources/assignment5/build && \
+RUN mkdir -p build && \
+    cd build && \
     cmake -D CMAKE_BUILD_TYPE=Release .. && \
     make && make test && cp helloworld /tmp
 
