@@ -19,7 +19,14 @@ RUN apt-get install -y --no-install-recommends \
 ADD . /opt/sources/assignment5
 WORKDIR /opt/sources/assignment5
 
-
+RUN pwd && \
+    echo "Contents of /opt/sources:" && \
+    ls -al && \
+    cd assignment5 && \
+    pwd && \
+    echo "Contents of /opt/sources/assignment5:" && \
+    ls -al
+    
 RUN cd /opt/sources/assignment5 && \
     mkdir build && \
     cd build && \
