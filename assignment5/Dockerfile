@@ -26,11 +26,10 @@ RUN pwd && \
     pwd && \
     echo "Contents of /opt/sources/assignment5:" && \
     ls -al
-    
-RUN cd /opt/sources/assignment5 && \
-    mkdir build && \
-    cd build && \
-    cmake -S /opt/sources/assignment5 -D CMAKE_BUILD_TYPE=Release .. && \
+
+RUN mkdir -p /opt/sources/assignment5/build && \
+    cd /opt/sources/assignment5/build && \
+    cmake -D CMAKE_BUILD_TYPE=Release .. && \
     make && make test && cp helloworld /tmp
 
 ##################################################
