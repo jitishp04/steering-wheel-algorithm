@@ -8,7 +8,20 @@ Biweekly Scrum meetings, every Monday and Friday to discuss team retrospectives(
 
 
 ## How do we ensure knowledge transfer among our team members?
-Open communication channels which promotes questions being presented. Open communications allows team members to question certain aspects about the code and allow successful knowledge transfer. Another way is to have a set rules and procedures that are followed throughout the process ensuring that there is no issue with the required skillset and the knowledge is acknowledged across the group.  
+
+Ensuring that knowledge transfer is important to maintain productivity and promote collabortation,  ensuring proper collabration and continuity Through the use of a LLM (ollama) a few notable strategies were highlighted ensure proper knowledge transfer.
+
+* Creation of user guides and manuals to highlight the procedure that the team follows and ensure that the documentation is accessible to the members.
+
+* Implementing knowledge sharing platform by utilizing commmunication platform and ensure that teammates are able to freely communicate their opinions and progress regarding the project.
+
+* Encourage collaboration i.e an environment where teammates are free to assist and work together on issues.This will help inter and intra team knowledge sharing.
+
+* Open communication channels which promotes questions being presented. Open communications allows team members to question certain aspects about the code and allow successful knowledge transfer. 
+
+* Setting rules and procedures  and ensuring that they are followed throughout the process ensuring that there is no issue with the required skillset and the knowledge is acknowledged across the group.  
+
+These strategies can be handled using platforms such as gitlab, since they facilitate knowledge transfer by allowing all members to view current code and allow easy access to permit modifications through branches. Gitlab also controls the sanctity of the changes by protecting the main branch and allowing members to implement tools such as CI/CD.
 
 ## What is our usual communication plan?
 Our communication plan involves regular updates through both scheduled meetings and informal channels like group chat. We'll prioritize clarity and responsiveness to ensure that everyone remains informed and engaged throughout the project.
