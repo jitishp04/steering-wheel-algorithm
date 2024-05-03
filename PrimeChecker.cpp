@@ -2,10 +2,6 @@
 
 bool PrimeChecker::isPrime(uint16_t n) {
     bool retVal{true};
-    // add changes to fail the pipeline 
-    if(n == 2) {
-        return true;
-    }
     if (n<2 || 0 == n%2) {
         retVal = false;
     }
