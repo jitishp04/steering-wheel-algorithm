@@ -1,6 +1,4 @@
 # Copyright (C) 2023 Christian Berger
-#
-# Using the latest Docker image and Docker-in-Docker service to ensure compatibility with Docker Engine 26.1.1.
 
 image: docker:latest
 
@@ -10,13 +8,14 @@ services:
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
 
 stages:
   - build
   - deploy
 
 before_script:
-  - docker info
+  - docker version
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
 build-and-test:
@@ -26,7 +25,10 @@ build-and-test:
   tags:
     - docker-build
   script:
-    - docker build -f Dockerfile .
+    - docker buildx create --name mybuilder
+    - docker buildx use mybuilder
+    - docker buildx inspect --bootstrap
+    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t "$CI_REGISTRY_IMAGE" --push .
 
 release:
   stage: deploy
@@ -40,5 +42,7 @@ release:
     - docker-build
   script:
     - echo "Deploying tag $CI_COMMIT_TAG to $CI_REGISTRY_IMAGE"
-    - docker build -f Dockerfile -t "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG" .
-    - docker push "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG"
+    - docker buildx create --name mybuilder
+    - docker buildx use mybuilder
+    - docker buildx inspect --bootstrap
+    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG" --push .
