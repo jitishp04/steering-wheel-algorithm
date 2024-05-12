@@ -26,6 +26,8 @@
 
 int32_t main(int32_t argc, char **argv) {
     int32_t retCode{1};
+    double leftInfrared;
+    double rightInfrared;
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
     if ( (0 == commandlineArguments.count("cid")) ||
@@ -57,6 +59,8 @@ int32_t main(int32_t argc, char **argv) {
             cluon::OD4Session od4{static_cast<uint16_t>(std::stoi(commandlineArguments["cid"]))};
 
             opendlv::proxy::GroundSteeringRequest gsr;
+            opendlv::proxy::VoltageReading infrared;
+            std::mutex infraredM;
             std::mutex gsrMutex;
             auto onGroundSteeringRequest = [&gsr, &gsrMutex](cluon::data::Envelope &&env){
                 // The envelope data structure provide further details, such as sampleTimePoint as shown in this test case:
@@ -67,6 +71,22 @@ int32_t main(int32_t argc, char **argv) {
             };
 
             od4.dataTrigger(opendlv::proxy::GroundSteeringRequest::ID(), onGroundSteeringRequest);
+
+            //infrared retreiving
+
+            auto voltageReading = [&infrared, &infraredM, &rightInfrared, &leftInfrared](cluon::data::Envelope &&env){
+                std::lock_guard<std::mutex> lck(infraredM);
+                infrared = cluon::extractMessage<opendlv::proxy::VoltageReading>(std::move(env));
+                if(env.senderStamp()==3){
+                    rightInfrared = infrared.voltage();
+                }
+                else if (env.senderStamp()==1)
+                {
+                    leftInfrared = infrared.voltage();
+                }    
+            };
+
+            od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), voltageReading);
 
             // Endless loop; end the program by pressing Ctrl-C.
             while (od4.isRunning()) {
@@ -85,10 +105,47 @@ int32_t main(int32_t argc, char **argv) {
                 }
                 // TODO: Here, you can add some code to check the sampleTimePoint when the current frame was captured.
                 sharedMemory->unlock();
+                cv:: Mat img_hsv;
+                cv::cvtColor(img,img_hsv,cv::COLOR_BGR2HSV);
+                // considering the blue cones RGB is around 24,32,66 
+                // these HSV values can be derived
+                cv::Scalar blue_lower_boundary = cv::Scalar(82, 120, 10);
+                cv::Scalar blue_upper_boundary = cv::Scalar(130, 255, 215);
+
+                //HSV values for the yellow cones
+                cv::Scalar yellow_lower_boundary = cv::Scalar(12,20,20);
+                cv::Scalar yellow_upper_boundary = cv::Scalar(70,100,255);
+
+                cv::Mat blue_masking;
+                cv::Mat yellow_masking;
+
+                //remove noise and merge individual smaller boxes together within bigger cone box
+                cv::Mat mergeBox = cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5,5));
+
+                cv::inRange(img_hsv,yellow_lower_boundary,yellow_upper_boundary,yellow_masking);
+                cv::inRange(img_hsv,blue_lower_boundary,blue_upper_boundary,blue_masking);
+                cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_OPEN, mergeBox);
+                cv::morphologyEx(yellow_masking, yellow_masking, cv::MORPH_OPEN, mergeBox);
+                
+
+                std::vector<std::vector<cv::Point>> blue_contours;
+                std::vector<std::vector<cv::Point>> yellow_contours;
+                cv::findContours(yellow_masking.clone(),yellow_contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
+                cv::findContours(blue_masking.clone(),blue_contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
+
+                for(const auto &New_blue_contours : blue_contours){
+                    cv::Rect temp_blue_boundary = cv::boundingRect(New_blue_contours);
+                    cv::rectangle(img,temp_blue_boundary,cv::Scalar(0,255,0),2);
+                }
+                for(const auto &New_yellow_contours : yellow_contours){
+                    cv::Rect temp_yellow_boundary = cv::boundingRect(New_yellow_contours);
+                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,200,0),2);
+                }
+
 
                 // TODO: Do something with the frame.
                 // Example: Draw a red rectangle and display image.
-                cv::rectangle(img, cv::Point(50, 50), cv::Point(100, 100), cv::Scalar(0,0,255));
+                // cv::rectangle(img, cv::Point(50, 50), cv::Point(100, 100), cv::Scalar(0,0,255));
 
                 // If you want to access the latest received ground steering, don't forget to lock the mutex:
                 {
