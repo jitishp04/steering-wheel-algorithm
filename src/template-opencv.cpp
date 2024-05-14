@@ -141,11 +141,11 @@ int32_t main(int32_t argc, char **argv) {
 
                 for(const auto &New_blue_contours : blue_contours){
                     cv::Rect temp_blue_boundary = cv::boundingRect(New_blue_contours);
-                    cv::rectangle(img,temp_blue_boundary,cv::Scalar(0,255,0),2);
+                    cv::rectangle(img,temp_blue_boundary,cv::Scalar(255,255,0),2);
                 }
                 for(const auto &New_yellow_contours : yellow_contours){
                     cv::Rect temp_yellow_boundary = cv::boundingRect(New_yellow_contours);
-                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,200,0),2);
+                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,255,),2);
                 }
 
 
