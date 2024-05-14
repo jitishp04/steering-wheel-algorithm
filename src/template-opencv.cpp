@@ -113,14 +113,13 @@ int32_t main(int32_t argc, char **argv) {
 
                 cv:: Mat img_hsv;
                 cv::cvtColor(img,img_hsv,cv::COLOR_BGR2HSV);
-                // considering the blue cones RGB is around 24,32,66 
-                // these HSV values can be derived
-                cv::Scalar blue_lower_boundary = cv::Scalar(82, 120, 10);
-                cv::Scalar blue_upper_boundary = cv::Scalar(130, 255, 215);
-
+               
+                // update masking values using further data derived through experimentation with colour-space images
+                cv::Scalar blue_lower_boundary = cv::Scalar(78, 50, 50); 
+                cv::Scalar blue_upper_boundary = cv::Scalar(134, 255, 255); 
                 //HSV values for the yellow cones
-                cv::Scalar yellow_lower_boundary = cv::Scalar(12,20,20);
-                cv::Scalar yellow_upper_boundary = cv::Scalar(70,100,255);
+                cv::Scalar yellow_lower_boundary = cv::Scalar(9,0,147);
+                cv::Scalar yellow_upper_boundary = cv::Scalar(76,255,255);
 
                 cv::Mat blue_masking;
                 cv::Mat yellow_masking;
