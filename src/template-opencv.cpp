@@ -24,10 +24,31 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+auto steeringAlgorithm(double leftInfrared, double rightInfrared) -> double {
+    double maxSteeringAngle = 0.3;
+    double turnThreshold = 0.06;
+    double steeringAngle = 0.0;
+
+    if (leftInfrared < turnThreshold || rightInfrared < turnThreshold) {
+        double difference = leftInfrared - rightInfrared;
+        if (difference > 0) {
+            steeringAngle = std::max(-difference, -maxSteeringAngle);
+        } else {
+            steeringAngle = std::min(-difference, maxSteeringAngle);
+        }
+    }
+
+    steeringAngle = std::max(std::min(steeringAngle, maxSteeringAngle), -maxSteeringAngle);
+    return steeringAngle;
+}
+
+
 int32_t main(int32_t argc, char **argv) {
     int32_t retCode{1};
     double leftInfrared;
     double rightInfrared;
+    double steeringAngle = 0;
+
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
     if ( (0 == commandlineArguments.count("cid")) ||
@@ -67,7 +88,7 @@ int32_t main(int32_t argc, char **argv) {
                 // https://github.com/chrberger/libcluon/blob/master/libcluon/testsuites/TestEnvelopeConverter.cpp#L31-L40
                 std::lock_guard<std::mutex> lck(gsrMutex);
                 gsr = cluon::extractMessage<opendlv::proxy::GroundSteeringRequest>(std::move(env));
-                std::cout << "lambda: groundSteering = " << gsr.groundSteering() << std::endl;
+                //std::cout << "lambda: groundSteering = " << gsr.groundSteering() << std::endl;
             };
 
             od4.dataTrigger(opendlv::proxy::GroundSteeringRequest::ID(), onGroundSteeringRequest);
@@ -148,7 +169,8 @@ int32_t main(int32_t argc, char **argv) {
                     cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,200,0),2);
                 }
 
-
+                steeringAngle = steeringAlgorithm(leftInfrared, rightInfrared);
+                                                
                 // TODO: Do something with the frame.
                 // Example: Draw a red rectangle and display image.
                 // cv::rectangle(img, cv::Point(50, 50), cv::Point(100, 100), cv::Scalar(0,0,255));
@@ -156,7 +178,8 @@ int32_t main(int32_t argc, char **argv) {
                 // If you want to access the latest received ground steering, don't forget to lock the mutex:
                 {
                     std::lock_guard<std::mutex> lck(gsrMutex);
-                    std::cout << "main: groundSteering = " << gsr.groundSteering() << std::endl;
+                    std::cout << "main: groundSteering: " << gsr.groundSteering() << std::endl;
+		            std::cout << "IR: " << steeringAngle << std::endl;
                 }
 
                 // Display image on your screen.
