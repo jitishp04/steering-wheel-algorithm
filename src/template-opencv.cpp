@@ -145,7 +145,7 @@ int32_t main(int32_t argc, char **argv) {
                 }
                 for(const auto &New_yellow_contours : yellow_contours){
                     cv::Rect temp_yellow_boundary = cv::boundingRect(New_yellow_contours);
-                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,255,),2);
+                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,255,255),2);
                 }
 
 
