@@ -106,10 +106,16 @@ int32_t main(int32_t argc, char **argv) {
                 // TODO: Here, you can add some code to check the sampleTimePoint when the current frame was captured.
                 sharedMemory->unlock();
 
-                cv::rectangle(img, cv::Point(0, 0), cv::Point(650, 250), cv::Scalar(0,0,0), cv::FILLED);
+                cv::rectangle(img, cv::Point(0, 0), cv::Point(650, 250), cv::Scalar(0, 0, 0), cv::FILLED);
                 // Placing a black box in the region above the cones to avoid Detecting colours in the background
-                cv::rectangle(img, cv::Point(0, 385), cv::Point(650, 500), cv::Scalar(0,0,0), cv::FILLED);
-                // Placing a black box over the wiring of the car, in order to avoid Detecting colours there 
+                cv::rectangle(img, cv::Point(0, 375), cv::Point(650, 500), cv::Scalar(0, 0, 0), cv::FILLED);
+                // Placing a black box over the wiring of the car, in order to avoid Detecting colours there
+
+                // Left side black box, extending vertically to cover from the top to the bottom of the existing black boxes
+                cv::rectangle(img, cv::Point(0, 0), cv::Point(100, 500), cv::Scalar(0, 0, 0), cv::FILLED);
+
+                // Right side black box, similar to the left, ensuring it covers the same vertical height
+                cv::rectangle(img, cv::Point(550, 0), cv::Point(650, 500), cv::Scalar(0, 0, 0), cv::FILLED);
 
                 cv:: Mat img_hsv;
                 cv::cvtColor(img,img_hsv,cv::COLOR_BGR2HSV);
