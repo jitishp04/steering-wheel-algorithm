@@ -44,9 +44,11 @@ auto steeringAlgorithm(double leftInfrared, double rightInfrared) -> double {
 
 
 int32_t main(int32_t argc, char **argv) {
+
     int32_t retCode{1};
     double leftInfrared;
     double rightInfrared;
+    double angularVeloZ = 0.0;
     double steeringAngle = 0;
 
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
@@ -109,6 +111,21 @@ int32_t main(int32_t argc, char **argv) {
 
             od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), voltageReading);
 
+            opendlv::proxy::AngularVelocityReading angularVZ;
+            std::mutex angularVZMutex;
+            auto onAngularvelocityReading = [&angularVZ, &angularVZMutex, &angularVeloZ](cluon::data::Envelope &&env)
+            {
+                std::lock_guard<std::mutex> lck(angularVZMutex);
+                angularVZ = cluon::extractMessage<opendlv::proxy::AngularVelocityReading>(std::move(env));
+                if (env.senderStamp() == 0)
+                {
+                    angularVeloZ = angularVZ.angularVelocityZ(); // Update angular velocity
+                    }
+                    std::cout << "AVZ = " << angularVZ.angularVelocityZ() << "," << std::endl;
+                    };
+                    
+                od4.dataTrigger(opendlv::proxy::AngularVelocityReading::ID(), onAngularvelocityReading);
+
             // Endless loop; end the program by pressing Ctrl-C.
             while (od4.isRunning()) {
                 // OpenCV data structure to hold an image.
@@ -127,21 +144,26 @@ int32_t main(int32_t argc, char **argv) {
                 // TODO: Here, you can add some code to check the sampleTimePoint when the current frame was captured.
                 sharedMemory->unlock();
 
-                cv::rectangle(img, cv::Point(0, 0), cv::Point(650, 250), cv::Scalar(0,0,0), cv::FILLED);
+                cv::rectangle(img, cv::Point(0, 0), cv::Point(650, 250), cv::Scalar(0, 0, 0), cv::FILLED);
                 // Placing a black box in the region above the cones to avoid Detecting colours in the background
-                cv::rectangle(img, cv::Point(0, 385), cv::Point(650, 500), cv::Scalar(0,0,0), cv::FILLED);
-                // Placing a black box over the wiring of the car, in order to avoid Detecting colours there 
+                cv::rectangle(img, cv::Point(0, 375), cv::Point(650, 500), cv::Scalar(0, 0, 0), cv::FILLED);
+                // Placing a black box over the wiring of the car, in order to avoid Detecting colours there
+
+                // Left side black box, extending vertically to cover from the top to the bottom of the existing black boxes
+                cv::rectangle(img, cv::Point(0, 0), cv::Point(100, 500), cv::Scalar(0, 0, 0), cv::FILLED);
+
+                // Right side black box, similar to the left, ensuring it covers the same vertical height
+                cv::rectangle(img, cv::Point(550, 0), cv::Point(650, 500), cv::Scalar(0, 0, 0), cv::FILLED);
 
                 cv:: Mat img_hsv;
                 cv::cvtColor(img,img_hsv,cv::COLOR_BGR2HSV);
-                // considering the blue cones RGB is around 24,32,66 
-                // these HSV values can be derived
-                cv::Scalar blue_lower_boundary = cv::Scalar(82, 120, 10);
-                cv::Scalar blue_upper_boundary = cv::Scalar(130, 255, 215);
-
+               
+                // update masking values using further data derived through experimentation with colour-space images
+                cv::Scalar blue_lower_boundary = cv::Scalar(78, 50, 50); 
+                cv::Scalar blue_upper_boundary = cv::Scalar(134, 255, 255); 
                 //HSV values for the yellow cones
-                cv::Scalar yellow_lower_boundary = cv::Scalar(12,20,20);
-                cv::Scalar yellow_upper_boundary = cv::Scalar(70,100,255);
+                cv::Scalar yellow_lower_boundary = cv::Scalar(9,0,147);
+                cv::Scalar yellow_upper_boundary = cv::Scalar(76,255,255);
 
                 cv::Mat blue_masking;
                 cv::Mat yellow_masking;
@@ -162,11 +184,11 @@ int32_t main(int32_t argc, char **argv) {
 
                 for(const auto &New_blue_contours : blue_contours){
                     cv::Rect temp_blue_boundary = cv::boundingRect(New_blue_contours);
-                    cv::rectangle(img,temp_blue_boundary,cv::Scalar(0,255,0),2);
+                    cv::rectangle(img,temp_blue_boundary,cv::Scalar(255,255,0),2);
                 }
                 for(const auto &New_yellow_contours : yellow_contours){
                     cv::Rect temp_yellow_boundary = cv::boundingRect(New_yellow_contours);
-                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,200,0),2);
+                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,255,255),2);
                 }
 
                 steeringAngle = steeringAlgorithm(leftInfrared, rightInfrared);
