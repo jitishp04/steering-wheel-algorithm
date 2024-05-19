@@ -25,9 +25,13 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 int32_t main(int32_t argc, char **argv) {
+
     int32_t retCode{1};
     double leftInfrared;
     double rightInfrared;
+    double angularVeloZ = 0.0;
+
+
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
     if ( (0 == commandlineArguments.count("cid")) ||
@@ -87,6 +91,21 @@ int32_t main(int32_t argc, char **argv) {
             };
 
             od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), voltageReading);
+
+            opendlv::proxy::AngularVelocityReading angularVZ;
+            std::mutex angularVZMutex;
+            auto onAngularvelocityReading = [&angularVZ, &angularVZMutex, &angularVeloZ](cluon::data::Envelope &&env)
+            {
+                std::lock_guard<std::mutex> lck(angularVZMutex);
+                angularVZ = cluon::extractMessage<opendlv::proxy::AngularVelocityReading>(std::move(env));
+                if (env.senderStamp() == 0)
+                {
+                    angularVeloZ = angularVZ.angularVelocityZ(); // Update angular velocity
+                    }
+                    std::cout << "AVZ = " << angularVZ.angularVelocityZ() << "," << std::endl;
+                    };
+                    
+                od4.dataTrigger(opendlv::proxy::AngularVelocityReading::ID(), onAngularvelocityReading);
 
             // Endless loop; end the program by pressing Ctrl-C.
             while (od4.isRunning()) {
