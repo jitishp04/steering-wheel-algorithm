@@ -354,6 +354,7 @@ int32_t main(int32_t argc, char **argv)
 
                 // If you want to access the latest received ground steering, don't forget to lock the mutex:
                 {
+                    /*
                     std::lock_guard<std::mutex> lck(gsrMutex);
                     if (groundSteering != 0)
                     {
@@ -364,7 +365,8 @@ int32_t main(int32_t argc, char **argv)
                         {
                             successfulComparisons++;
                         }
-                    }
+                    }    
+                    */
                     //std::cout << "main: groundSteering: " << gsr.groundSteering() << std::endl;
                     //std::cout << "our: " << steeringAngle << std::endl;
                     std::cout << "Group_15;" << sampleTimeStamp << ";" << steeringAngle << std::endl;
@@ -377,7 +379,8 @@ int32_t main(int32_t argc, char **argv)
                     cv::waitKey(1);
                 }
             }
-            // Calculate and print the accuracy percentage
+            
+            /*
             if (totalComparisons > 0)
             {
                 double accuracy = (static_cast<double>(successfulComparisons) / totalComparisons) * 100.0;
@@ -387,6 +390,8 @@ int32_t main(int32_t argc, char **argv)
             {
                 std::cout << "No valid comparisons made." << std::endl;
             }
+            
+            */
         }
         retCode = 0;
     }
