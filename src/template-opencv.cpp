@@ -24,12 +24,15 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-double steeringAlgorithm(double leftInfrared, double rightInfrared, int direction, double steering, double angularVeloZ, double angularVeloZDerivative)
+// Function to calculate the steering angle 
+double steeringAlgorithm(int direction, double steering, double angularVeloZ, double angularVeloZDerivative)
 {
-    double maxSteeringAngle = 0.28;
-    double steeringAngle = steering;
+    double maxSteeringAngle = 0.28; // Maximum steering angle
+    double steeringAngle = steering; // Initial steering angle
 
     steeringAngle = (angularVeloZ * 0.002879) + (angularVeloZDerivative * 0.00097);
+    // Calculate the steering angle based on angular velocity and its derivative
+
 
     if (steeringAngle >= 0)
     {
@@ -67,11 +70,11 @@ double steeringAlgorithm(double leftInfrared, double rightInfrared, int directio
             steeringAngle = 0.03;
         }
     }
-    else if (direction == 1)
+    else if (direction == 1) // Adjusting steering angle based on direction
     {
         steeringAngle = 0;
     }
-    else
+    else // Adjusting steering angle for negative values
     {
         steeringAngle = (angularVeloZ * 0.001879) + (angularVeloZDerivative * 0.00091); 
         steeringAngle = steeringAngle - 0.04;
@@ -103,20 +106,20 @@ double steeringAlgorithm(double leftInfrared, double rightInfrared, int directio
     return steeringAngle;
 }
 
-auto checkSteering(double leftInfrared, double rightInfrared, bool leftCone, bool rightCone, double steeringAngle, double angularVeloZ, double angularVeloZDerivative)
-{
+auto checkSteering(bool leftCone, bool rightCone, double steeringAngle, double angularVeloZ, double angularVeloZDerivative)
+{ // Function to call the steeringAlgorithm with the correct input
     double steering = 0;
-    if (leftCone && rightCone)
+    if (leftCone && rightCone) // Both cones detected
     {
-        steering = steeringAlgorithm(leftInfrared, rightInfrared, 1, steeringAngle, angularVeloZ, angularVeloZDerivative);
+        steering = steeringAlgorithm(1, steeringAngle, angularVeloZ, angularVeloZDerivative);
     }
-    else if (!leftCone && rightCone)
+    else if (!leftCone && rightCone) // Only right cone detected
     {
-        steering = steeringAlgorithm(leftInfrared, rightInfrared, 0, steeringAngle, angularVeloZ, angularVeloZDerivative);
+        steering = steeringAlgorithm(0, steeringAngle, angularVeloZ, angularVeloZDerivative);
     }
-    else if (!rightCone && leftCone)
+    else if (!rightCone && leftCone) // Only left cone detected
     {
-        steering = steeringAlgorithm(leftInfrared, rightInfrared, 2, steeringAngle, angularVeloZ, angularVeloZDerivative);
+        steering = steeringAlgorithm(2, steeringAngle, angularVeloZ, angularVeloZDerivative);
     }
     return steering;
 }
@@ -125,15 +128,16 @@ int32_t main(int32_t argc, char **argv)
 {
 
     int32_t retCode{1};
-    double leftInfrared;
-    double rightInfrared;
+
     double angularVeloZ = 0.0;
     double steeringAngle = 0;
     double angularVeloZDerivative = 0.0;
     
+    /*
     int totalComparisons = 0;
     int successfulComparisons = 0;
     double tolerance = 0.25;
+    */
 
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
@@ -169,8 +173,6 @@ int32_t main(int32_t argc, char **argv)
             cluon::OD4Session od4{static_cast<uint16_t>(std::stoi(commandlineArguments["cid"]))};
 
             opendlv::proxy::GroundSteeringRequest gsr;
-            opendlv::proxy::VoltageReading infrared;
-            std::mutex infraredM;
             std::mutex gsrMutex;
             auto onGroundSteeringRequest = [&gsr, &gsrMutex](cluon::data::Envelope &&env)
             {
@@ -183,24 +185,7 @@ int32_t main(int32_t argc, char **argv)
 
             od4.dataTrigger(opendlv::proxy::GroundSteeringRequest::ID(), onGroundSteeringRequest);
 
-            // infrared retreiving
-
-            auto voltageReading = [&infrared, &infraredM, &rightInfrared, &leftInfrared](cluon::data::Envelope &&env)
-            {
-                std::lock_guard<std::mutex> lck(infraredM);
-                infrared = cluon::extractMessage<opendlv::proxy::VoltageReading>(std::move(env));
-                if (env.senderStamp() == 3)
-                {
-                    rightInfrared = infrared.voltage();
-                }
-                else if (env.senderStamp() == 1)
-                {
-                    leftInfrared = infrared.voltage();
-                }
-            };
-
-            od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), voltageReading);
-
+            // Angular velocity reading handler
             opendlv::proxy::AngularVelocityReading angularVZ;
             std::mutex angularVZMutex;
             auto onAngularvelocityReading = [&angularVZ, &angularVZMutex, &angularVeloZ, &angularVeloZDerivative](cluon::data::Envelope &&env)
@@ -270,6 +255,8 @@ int32_t main(int32_t argc, char **argv)
 
                 cv::inRange(img_hsv, yellow_lower_boundary, yellow_upper_boundary, yellow_masking);
                 cv::inRange(img_hsv, blue_lower_boundary, blue_upper_boundary, blue_masking);
+
+                // Used for removing smaller noises and merging larger detected objects 
                 cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_OPEN, mergeBox);
                 cv::morphologyEx(yellow_masking, yellow_masking, cv::MORPH_OPEN, mergeBox);
                 cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_CLOSE, closeBox);
@@ -277,21 +264,26 @@ int32_t main(int32_t argc, char **argv)
 
                 std::vector<std::vector<cv::Point>> blue_contours;
                 std::vector<std::vector<cv::Point>> yellow_contours;
+
+                //Finding countours of blue and yellow
                 cv::findContours(yellow_masking.clone(), yellow_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
                 cv::findContours(blue_masking.clone(), blue_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
+                // Dividing the ROI into two halves
                 cv::Rect leftRegion(0, 0, 325, 500);
                 cv::Rect rightRegion(325, 0, 325, 500);
 
                 int leftSideValue = -1;
                 int rightSideValue = -1;
 
+                // Detected cone values
                 bool blueDetectedLeft = false;
                 bool blueDetectedRight = false;
                 bool yellowDetectedLeft = false;
                 bool yellowDetectedRight = false;
                 bool leftCone = true;
                 bool rightCone = true;
+                
 
                 for (const auto &blueContour : blue_contours)
                 {
@@ -320,7 +312,7 @@ int32_t main(int32_t argc, char **argv)
                     cv::Rect temp_yellow_boundary = cv::boundingRect(yellowContour);
                     cv::rectangle(img, temp_yellow_boundary, cv::Scalar(0, 200, 0), 2);
 
-                    cv::Moments yellowMoments = cv::moments(yellowContour);
+                    cv::Moments yellowMoments = cv::moments(yellowContour); 
                     cv::Point yellowCentroid(yellowMoments.m10 / yellowMoments.m00, yellowMoments.m01 / yellowMoments.m00);
 
                     // Check if the centroid is in the left region and cones are not detected on the right side
@@ -338,15 +330,16 @@ int32_t main(int32_t argc, char **argv)
 
                 if (!blueDetectedLeft && !yellowDetectedLeft)
                 {
-                    leftCone = false;
+                    leftCone = false; // Make the left cone false if no cones are detected on that side
                 }
 
                 if (!blueDetectedRight && !yellowDetectedRight)
                 {
-                    rightCone = false;
+                    rightCone = false; // Make the right cone false if no cones are detected on that side
                 }
 
-                steeringAngle = checkSteering(leftInfrared, rightInfrared, leftCone, rightCone, steeringAngle, angularVeloZ, angularVeloZDerivative);
+                steeringAngle = checkSteering(leftCone, rightCone, steeringAngle, angularVeloZ, angularVeloZDerivative);
+                // Calling the checkSteering function to call the steering angle with the right input
 
                 // TODO: Do something with the frame.
                 // Example: Draw a red rectangle and display image.
