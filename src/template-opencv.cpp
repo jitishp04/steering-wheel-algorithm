@@ -50,6 +50,7 @@ int32_t main(int32_t argc, char **argv) {
     double rightInfrared;
     double angularVeloZ = 0.0;
     double steeringAngle = 0;
+    double angularVeloZDerivative = 0.0;
 
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
@@ -113,12 +114,13 @@ int32_t main(int32_t argc, char **argv) {
 
             opendlv::proxy::AngularVelocityReading angularVZ;
             std::mutex angularVZMutex;
-            auto onAngularvelocityReading = [&angularVZ, &angularVZMutex, &angularVeloZ](cluon::data::Envelope &&env)
+            auto onAngularvelocityReading = [&angularVZ, &angularVZMutex, &angularVeloZ, &angularVeloZDerivative](cluon::data::Envelope &&env)
             {
                 std::lock_guard<std::mutex> lck(angularVZMutex);
                 angularVZ = cluon::extractMessage<opendlv::proxy::AngularVelocityReading>(std::move(env));
                 if (env.senderStamp() == 0)
                 {
+                    angularVeloZDerivative = angularVZ.angularVelocityZ() - angularVeloZ; // Calculate derivative
                     angularVeloZ = angularVZ.angularVelocityZ(); // Update angular velocity
                     }
                     std::cout << "AVZ = " << angularVZ.angularVelocityZ() << "," << std::endl;
