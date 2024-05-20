@@ -24,7 +24,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-auto steeringAlgorithm(double leftInfrared, double rightInfrared) -> double {
+double steeringAlgorithm(double leftInfrared, double rightInfrared, int direction, double steering, double angularVeloZ, double angularVeloZDerivative)
+{
     double maxSteeringAngle = 0.3;
     double turnThreshold = 0.06;
     double steeringAngle = 0.0;
@@ -40,6 +41,24 @@ auto steeringAlgorithm(double leftInfrared, double rightInfrared) -> double {
 
     steeringAngle = std::max(std::min(steeringAngle, maxSteeringAngle), -maxSteeringAngle);
     return steeringAngle;
+}
+
+auto checkSteering(double leftInfrared, double rightInfrared, bool leftCone, bool rightCone, double steeringAngle, double angularVeloZ, double angularVeloZDerivative)
+{
+    double steering = 0;
+    if (leftCone && rightCone)
+    {
+        steering = steeringAlgorithm(leftInfrared, rightInfrared, 1, steeringAngle, angularVeloZ, angularVeloZDerivative);
+    }
+    else if (!leftCone && rightCone)
+    {
+        steering = steeringAlgorithm(leftInfrared, rightInfrared, 0, steeringAngle, angularVeloZ, angularVeloZDerivative);
+    }
+    else if (!rightCone && leftCone)
+    {
+        steering = steeringAlgorithm(leftInfrared, rightInfrared, 2, steeringAngle, angularVeloZ, angularVeloZDerivative);
+    }
+    return steering;
 }
 
 
@@ -198,6 +217,8 @@ int32_t main(int32_t argc, char **argv) {
                 bool blueDetectedRight = false;
                 bool yellowDetectedLeft = false;
                 bool yellowDetectedRight = false;
+                bool leftCone = true;
+                bool rightCone = true;
 
                 for (const auto &blueContour : blue_contours)
                 {
@@ -242,7 +263,17 @@ int32_t main(int32_t argc, char **argv) {
                     }
                 }
 
-                steeringAngle = steeringAlgorithm(leftInfrared, rightInfrared);
+                if (!blueDetectedLeft && !yellowDetectedLeft)
+                {
+                    leftCone = false;
+                }
+
+                if (!blueDetectedRight && !yellowDetectedRight)
+                {
+                    rightCone = false;
+                }
+
+                steeringAngle = checkSteering(leftInfrared, rightInfrared, leftCone, rightCone, steeringAngle, angularVeloZ, angularVeloZDerivative);
                                                 
                 // TODO: Do something with the frame.
                 // Example: Draw a red rectangle and display image.
