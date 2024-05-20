@@ -292,7 +292,7 @@ int32_t main(int32_t argc, char **argv)
                     cv::rectangle(img, temp_blue_boundary, cv::Scalar(0, 255, 0), 2);
 
                     cv::Moments blueMoments = cv::moments(blueContour);
-                    cv::Point blueCentroid(blueMoments.m10 / blueMoments.m00, blueMoments.m01 / blueMoments.m00);
+                    cv::Point blueCentroid(static_cast<int>(blueMoments.m10 / blueMoments.m00), static_cast<int>(blueMoments.m01 / blueMoments.m00));
                     // Check if the centroid is in the left region and cones are not detected on the right side
                     if (leftRegion.contains(blueCentroid) && !blueDetectedRight)
                     {
@@ -313,7 +313,7 @@ int32_t main(int32_t argc, char **argv)
                     cv::rectangle(img, temp_yellow_boundary, cv::Scalar(0, 200, 0), 2);
 
                     cv::Moments yellowMoments = cv::moments(yellowContour); 
-                    cv::Point yellowCentroid(yellowMoments.m10 / yellowMoments.m00, yellowMoments.m01 / yellowMoments.m00);
+                    cv::Point yellowCentroid(static_cast<int>(yellowMoments.m10 / yellowMoments.m00), static_cast<int>(yellowMoments.m01 / yellowMoments.m00));
 
                     // Check if the centroid is in the left region and cones are not detected on the right side
                     if (leftRegion.contains(yellowCentroid) && !yellowDetectedRight)
