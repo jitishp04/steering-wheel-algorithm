@@ -73,38 +73,31 @@ double steeringAlgorithm(double leftInfrared, double rightInfrared, int directio
     }
     else
     {
+        steeringAngle = (angularVeloZ * 0.001879) + (angularVeloZDerivative * 0.00091); 
         steeringAngle = steeringAngle - 0.04;
         if (steeringAngle <= -0.23)
         {
-            steeringAngle = -0.23;
+            steeringAngle = -0.26;
         }
         else if (steeringAngle <= -0.19)
         {
-            steeringAngle = -0.22;
+            steeringAngle = -0.23;
         }
         else if (steeringAngle <= -0.18)
         {
-            steeringAngle = -0.2;
+            steeringAngle = -0.222;
         }
         else if (steeringAngle <= -0.16)
         {
-            steeringAngle = -0.1445;
+            steeringAngle = -0.209;
         }
         else if (steeringAngle <= -0.12)
         {
-            steeringAngle = -0.129;
+            steeringAngle = -0.17;
         }
         else if (steeringAngle <= -0.07)
         {
-            steeringAngle = -0.089;
-        }
-        else if (steeringAngle <= -0.05)
-        {
-            steeringAngle = -0.025;
-        }
-        else if (steeringAngle <= -0.02)
-        {
-            steeringAngle = -0.016;
+            steeringAngle = -0.11;
         }
     }
     return steeringAngle;
