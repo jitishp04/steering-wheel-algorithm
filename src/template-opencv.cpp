@@ -362,7 +362,7 @@ int32_t main(int32_t argc, char **argv)
                     */
                     //std::cout << "main: groundSteering: " << gsr.groundSteering() << std::endl;
                     //std::cout << "our: " << steeringAngle << std::endl;
-                    std::cout << "Group_15;" << sampleTimeStamp << ";" << steeringAngle << std::endl;
+                    std::cout << "Group_15;" << sampleTimeStamp << ";" << steeringAngle << std::endl;
                 }
 
                 // Display image on your screen.
