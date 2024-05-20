@@ -17,7 +17,7 @@
 
 // Include the single-file, header-only middleware libcluon to create high-performance microservices
 #include "cluon-complete.hpp"
-// Include the OpenDLV Standard Message Set that contains messages that are usually exchanged for automotive or robotic applications 
+// Include the OpenDLV Standard Message Set that contains messages that are usually exchanged for automotive or robotic applications
 #include "opendlv-standard-message-set.hpp"
 
 // Include the GUI and image processing header files from OpenCV
@@ -26,20 +26,87 @@
 
 double steeringAlgorithm(double leftInfrared, double rightInfrared, int direction, double steering, double angularVeloZ, double angularVeloZDerivative)
 {
-    double maxSteeringAngle = 0.3;
-    double turnThreshold = 0.06;
-    double steeringAngle = 0.0;
+    double maxSteeringAngle = 0.28;
+    double steeringAngle = steering;
 
-    if (leftInfrared < turnThreshold || rightInfrared < turnThreshold) {
-        double difference = leftInfrared - rightInfrared;
-        if (difference > 0) {
-            steeringAngle = std::max(-difference, -maxSteeringAngle);
-        } else {
-            steeringAngle = std::min(-difference, maxSteeringAngle);
+    steeringAngle = (angularVeloZ * 0.002879) + (angularVeloZDerivative * 0.00097); 
+
+    if (steeringAngle >= 0)
+    {
+        steeringAngle = steeringAngle + 0.04;
+        if (steeringAngle >= 0.23)
+        {
+            steeringAngle = 0.23;
+        }
+        else if (steeringAngle >= 0.19)
+        {
+            steeringAngle = 0.22;
+        }
+        else if (steeringAngle >= 0.18)
+        {
+            steeringAngle = 0.19;
+        }
+        else if (steeringAngle >= 0.16)
+        {
+            steeringAngle = 0.17;
+        }
+        else if (steeringAngle >= 0.12)
+        {
+            steeringAngle = 0.086;
+        }
+        else if (steeringAngle >= 0.07)
+        {
+            steeringAngle = 0.07;
+        }
+        else if (steeringAngle >= 0.05)
+        {
+            steeringAngle = 0.06;
+        }
+        else if (steeringAngle >= 0.02)
+        {
+            steeringAngle = 0.03;
         }
     }
-
-    steeringAngle = std::max(std::min(steeringAngle, maxSteeringAngle), -maxSteeringAngle);
+    else if (direction == 1)
+    {
+        steeringAngle = 0;
+    }
+    else
+    {
+        steeringAngle = steeringAngle - 0.04;
+        if (steeringAngle <= -0.23)
+        {
+            steeringAngle = -0.23;
+        }
+        else if (steeringAngle <= -0.19)
+        {
+            steeringAngle = -0.22;
+        }
+        else if (steeringAngle <= -0.18)
+        {
+            steeringAngle = -0.2;
+        }
+        else if (steeringAngle <= -0.16)
+        {
+            steeringAngle = -0.1445;
+        }
+        else if (steeringAngle <= -0.12)
+        {
+            steeringAngle = -0.129;
+        }
+        else if (steeringAngle <= -0.07)
+        {
+            steeringAngle = -0.089;
+        }
+        else if (steeringAngle <= -0.05)
+        {
+            steeringAngle = -0.025;
+        }
+        else if (steeringAngle <= -0.02)
+        {
+            steeringAngle = -0.016;
+        }
+    }
     return steeringAngle;
 }
 
@@ -61,8 +128,8 @@ auto checkSteering(double leftInfrared, double rightInfrared, bool leftCone, boo
     return steering;
 }
 
-
-int32_t main(int32_t argc, char **argv) {
+int32_t main(int32_t argc, char **argv)
+{
 
     int32_t retCode{1};
     double leftInfrared;
@@ -73,10 +140,11 @@ int32_t main(int32_t argc, char **argv) {
 
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
-    if ( (0 == commandlineArguments.count("cid")) ||
-         (0 == commandlineArguments.count("name")) ||
-         (0 == commandlineArguments.count("width")) ||
-         (0 == commandlineArguments.count("height")) ) {
+    if ((0 == commandlineArguments.count("cid")) ||
+        (0 == commandlineArguments.count("name")) ||
+        (0 == commandlineArguments.count("width")) ||
+        (0 == commandlineArguments.count("height")))
+    {
         std::cerr << argv[0] << " attaches to a shared memory area containing an ARGB image." << std::endl;
         std::cerr << "Usage:   " << argv[0] << " --cid=<OD4 session> --name=<name of shared memory area> [--verbose]" << std::endl;
         std::cerr << "         --cid:    CID of the OD4Session to send and receive messages" << std::endl;
@@ -85,7 +153,8 @@ int32_t main(int32_t argc, char **argv) {
         std::cerr << "         --height: height of the frame" << std::endl;
         std::cerr << "Example: " << argv[0] << " --cid=253 --name=img --width=640 --height=480 --verbose" << std::endl;
     }
-    else {
+    else
+    {
         // Extract the values from the command line parameters
         const std::string NAME{commandlineArguments["name"]};
         const uint32_t WIDTH{static_cast<uint32_t>(std::stoi(commandlineArguments["width"]))};
@@ -94,7 +163,8 @@ int32_t main(int32_t argc, char **argv) {
 
         // Attach to the shared memory.
         std::unique_ptr<cluon::SharedMemory> sharedMemory{new cluon::SharedMemory{NAME}};
-        if (sharedMemory && sharedMemory->valid()) {
+        if (sharedMemory && sharedMemory->valid())
+        {
             std::clog << argv[0] << ": Attached to shared memory '" << sharedMemory->name() << " (" << sharedMemory->size() << " bytes)." << std::endl;
 
             // Interface to a running OpenDaVINCI session where network messages are exchanged.
@@ -105,28 +175,31 @@ int32_t main(int32_t argc, char **argv) {
             opendlv::proxy::VoltageReading infrared;
             std::mutex infraredM;
             std::mutex gsrMutex;
-            auto onGroundSteeringRequest = [&gsr, &gsrMutex](cluon::data::Envelope &&env){
+            auto onGroundSteeringRequest = [&gsr, &gsrMutex](cluon::data::Envelope &&env)
+            {
                 // The envelope data structure provide further details, such as sampleTimePoint as shown in this test case:
                 // https://github.com/chrberger/libcluon/blob/master/libcluon/testsuites/TestEnvelopeConverter.cpp#L31-L40
                 std::lock_guard<std::mutex> lck(gsrMutex);
                 gsr = cluon::extractMessage<opendlv::proxy::GroundSteeringRequest>(std::move(env));
-                //std::cout << "lambda: groundSteering = " << gsr.groundSteering() << std::endl;
+                // std::cout << "lambda: groundSteering = " << gsr.groundSteering() << std::endl;
             };
 
             od4.dataTrigger(opendlv::proxy::GroundSteeringRequest::ID(), onGroundSteeringRequest);
 
-            //infrared retreiving
+            // infrared retreiving
 
-            auto voltageReading = [&infrared, &infraredM, &rightInfrared, &leftInfrared](cluon::data::Envelope &&env){
+            auto voltageReading = [&infrared, &infraredM, &rightInfrared, &leftInfrared](cluon::data::Envelope &&env)
+            {
                 std::lock_guard<std::mutex> lck(infraredM);
                 infrared = cluon::extractMessage<opendlv::proxy::VoltageReading>(std::move(env));
-                if(env.senderStamp()==3){
+                if (env.senderStamp() == 3)
+                {
                     rightInfrared = infrared.voltage();
                 }
-                else if (env.senderStamp()==1)
+                else if (env.senderStamp() == 1)
                 {
                     leftInfrared = infrared.voltage();
-                }    
+                }
             };
 
             od4.dataTrigger(opendlv::proxy::VoltageReading::ID(), voltageReading);
@@ -140,15 +213,16 @@ int32_t main(int32_t argc, char **argv) {
                 if (env.senderStamp() == 0)
                 {
                     angularVeloZDerivative = angularVZ.angularVelocityZ() - angularVeloZ; // Calculate derivative
-                    angularVeloZ = angularVZ.angularVelocityZ(); // Update angular velocity
-                    }
-                    std::cout << "AVZ = " << angularVZ.angularVelocityZ() << "," << std::endl;
-                    };
-                    
-                od4.dataTrigger(opendlv::proxy::AngularVelocityReading::ID(), onAngularvelocityReading);
+                    angularVeloZ = angularVZ.angularVelocityZ();                          // Update angular velocity
+                }
+                // std::cout << "AVZ = " << angularVZ.angularVelocityZ() << "," << std::endl;
+            };
+
+            od4.dataTrigger(opendlv::proxy::AngularVelocityReading::ID(), onAngularvelocityReading);
 
             // Endless loop; end the program by pressing Ctrl-C.
-            while (od4.isRunning()) {
+            while (od4.isRunning())
+            {
                 // OpenCV data structure to hold an image.
                 cv::Mat img;
 
@@ -176,36 +250,34 @@ int32_t main(int32_t argc, char **argv) {
                 // Right side black box, similar to the left, ensuring it covers the same vertical height
                 cv::rectangle(img, cv::Point(550, 0), cv::Point(650, 500), cv::Scalar(0, 0, 0), cv::FILLED);
 
-                cv:: Mat img_hsv;
-                cv::cvtColor(img,img_hsv,cv::COLOR_BGR2HSV);
-               
+                cv::Mat img_hsv;
+                cv::cvtColor(img, img_hsv, cv::COLOR_BGR2HSV);
+
                 // update masking values using further data derived through experimentation with colour-space images
-                cv::Scalar blue_lower_boundary = cv::Scalar(78, 50, 50); 
-                cv::Scalar blue_upper_boundary = cv::Scalar(134, 255, 255); 
-                //HSV values for the yellow cones
-                cv::Scalar yellow_lower_boundary = cv::Scalar(9,0,147);
-                cv::Scalar yellow_upper_boundary = cv::Scalar(76,255,255);
+                cv::Scalar blue_lower_boundary = cv::Scalar(78, 50, 50);
+                cv::Scalar blue_upper_boundary = cv::Scalar(134, 255, 255);
+                // HSV values for the yellow cones
+                cv::Scalar yellow_lower_boundary = cv::Scalar(9, 0, 147);
+                cv::Scalar yellow_upper_boundary = cv::Scalar(76, 255, 255);
 
                 cv::Mat blue_masking;
                 cv::Mat yellow_masking;
 
-                //remove noise and merge individual smaller boxes together within bigger cone box
-                cv::Mat mergeBox = cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5,5));
-                cv::Mat closeBox = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9,9));
+                // remove noise and merge individual smaller boxes together within bigger cone box
+                cv::Mat mergeBox = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+                cv::Mat closeBox = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9, 9));
 
-                cv::inRange(img_hsv,yellow_lower_boundary,yellow_upper_boundary,yellow_masking);
-                cv::inRange(img_hsv,blue_lower_boundary,blue_upper_boundary,blue_masking);
+                cv::inRange(img_hsv, yellow_lower_boundary, yellow_upper_boundary, yellow_masking);
+                cv::inRange(img_hsv, blue_lower_boundary, blue_upper_boundary, blue_masking);
                 cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_OPEN, mergeBox);
                 cv::morphologyEx(yellow_masking, yellow_masking, cv::MORPH_OPEN, mergeBox);
                 cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_CLOSE, closeBox);
                 cv::morphologyEx(yellow_masking, yellow_masking, cv::MORPH_CLOSE, closeBox);
 
-                
-
                 std::vector<std::vector<cv::Point>> blue_contours;
                 std::vector<std::vector<cv::Point>> yellow_contours;
-                cv::findContours(yellow_masking.clone(),yellow_contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
-                cv::findContours(blue_masking.clone(),blue_contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
+                cv::findContours(yellow_masking.clone(), yellow_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+                cv::findContours(blue_masking.clone(), blue_contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
                 cv::Rect leftRegion(0, 0, 325, 500);
                 cv::Rect rightRegion(325, 0, 325, 500);
@@ -274,7 +346,7 @@ int32_t main(int32_t argc, char **argv) {
                 }
 
                 steeringAngle = checkSteering(leftInfrared, rightInfrared, leftCone, rightCone, steeringAngle, angularVeloZ, angularVeloZDerivative);
-                                                
+
                 // TODO: Do something with the frame.
                 // Example: Draw a red rectangle and display image.
                 // cv::rectangle(img, cv::Point(50, 50), cv::Point(100, 100), cv::Scalar(0,0,255));
@@ -283,11 +355,12 @@ int32_t main(int32_t argc, char **argv) {
                 {
                     std::lock_guard<std::mutex> lck(gsrMutex);
                     std::cout << "main: groundSteering: " << gsr.groundSteering() << std::endl;
-		            std::cout << "IR: " << steeringAngle << std::endl;
+                    std::cout << "our: " << steeringAngle << std::endl;
                 }
 
                 // Display image on your screen.
-                if (VERBOSE) {
+                if (VERBOSE)
+                {
                     cv::imshow(sharedMemory->name().c_str(), img);
                     cv::waitKey(1);
                 }
