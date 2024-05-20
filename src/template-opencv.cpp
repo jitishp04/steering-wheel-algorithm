@@ -29,7 +29,7 @@ double steeringAlgorithm(double leftInfrared, double rightInfrared, int directio
     double maxSteeringAngle = 0.28;
     double steeringAngle = steering;
 
-    steeringAngle = (angularVeloZ * 0.002879) + (angularVeloZDerivative * 0.00097); 
+    steeringAngle = (angularVeloZ * 0.002879) + (angularVeloZDerivative * 0.00097);
 
     if (steeringAngle >= 0)
     {
@@ -364,6 +364,16 @@ int32_t main(int32_t argc, char **argv)
                     cv::imshow(sharedMemory->name().c_str(), img);
                     cv::waitKey(1);
                 }
+            }
+            // Calculate and print the accuracy percentage
+            if (totalComparisons > 0)
+            {
+                double accuracy = (static_cast<double>(successfulComparisons) / totalComparisons) * 100.0;
+                std::cout << "Accuracy of steering algorithm: " << accuracy << "%" << std::endl;
+            }
+            else
+            {
+                std::cout << "No valid comparisons made." << std::endl;
             }
         }
         retCode = 0;
