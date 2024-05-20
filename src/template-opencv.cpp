@@ -170,11 +170,15 @@ int32_t main(int32_t argc, char **argv) {
 
                 //remove noise and merge individual smaller boxes together within bigger cone box
                 cv::Mat mergeBox = cv::getStructuringElement(cv::MORPH_RECT,cv::Size(5,5));
+                cv::Mat closeBox = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9,9));
 
                 cv::inRange(img_hsv,yellow_lower_boundary,yellow_upper_boundary,yellow_masking);
                 cv::inRange(img_hsv,blue_lower_boundary,blue_upper_boundary,blue_masking);
                 cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_OPEN, mergeBox);
                 cv::morphologyEx(yellow_masking, yellow_masking, cv::MORPH_OPEN, mergeBox);
+                cv::morphologyEx(blue_masking, blue_masking, cv::MORPH_CLOSE, closeBox);
+                cv::morphologyEx(yellow_masking, yellow_masking, cv::MORPH_CLOSE, closeBox);
+
                 
 
                 std::vector<std::vector<cv::Point>> blue_contours;
@@ -182,13 +186,58 @@ int32_t main(int32_t argc, char **argv) {
                 cv::findContours(yellow_masking.clone(),yellow_contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
                 cv::findContours(blue_masking.clone(),blue_contours,cv::RETR_EXTERNAL,cv::CHAIN_APPROX_SIMPLE);
 
-                for(const auto &New_blue_contours : blue_contours){
-                    cv::Rect temp_blue_boundary = cv::boundingRect(New_blue_contours);
-                    cv::rectangle(img,temp_blue_boundary,cv::Scalar(255,255,0),2);
+                cv::Rect leftRegion(0, 0, 325, 500);
+                cv::Rect rightRegion(325, 0, 325, 500);
+
+                int leftSideValue = -1;
+                int rightSideValue = -1;
+
+                bool blueDetectedLeft = false;
+                bool blueDetectedRight = false;
+                bool yellowDetectedLeft = false;
+                bool yellowDetectedRight = false;
+
+                for (const auto &blueContour : blue_contours)
+                {
+                    // Calculate the bounding rectangle of the contour
+                    cv::Rect temp_blue_boundary = cv::boundingRect(blueContour);
+                    cv::rectangle(img, temp_blue_boundary, cv::Scalar(0, 255, 0), 2);
+
+                    cv::Moments blueMoments = cv::moments(blueContour);
+                    cv::Point blueCentroid(blueMoments.m10 / blueMoments.m00, blueMoments.m01 / blueMoments.m00);
+                    // Check if the centroid is in the left region and cones are not detected on the right side
+                    if (leftRegion.contains(blueCentroid) && !blueDetectedRight)
+                    {
+                        leftSideValue = 0; // Blue cones on the left side
+                        blueDetectedLeft = true;
+                    }
+                    else if (rightRegion.contains(blueCentroid) && !blueDetectedLeft)
+                    {
+                        rightSideValue = 0; // Blue cones on the right side
+                        blueDetectedRight = true;
+                    }
                 }
-                for(const auto &New_yellow_contours : yellow_contours){
-                    cv::Rect temp_yellow_boundary = cv::boundingRect(New_yellow_contours);
-                    cv::rectangle(img,temp_yellow_boundary,cv::Scalar(0,255,255),2);
+
+                for (const auto &yellowContour : yellow_contours)
+                {
+                    // Calculate the bounding rectangle of the contour
+                    cv::Rect temp_yellow_boundary = cv::boundingRect(yellowContour);
+                    cv::rectangle(img, temp_yellow_boundary, cv::Scalar(0, 200, 0), 2);
+
+                    cv::Moments yellowMoments = cv::moments(yellowContour);
+                    cv::Point yellowCentroid(yellowMoments.m10 / yellowMoments.m00, yellowMoments.m01 / yellowMoments.m00);
+
+                    // Check if the centroid is in the left region and cones are not detected on the right side
+                    if (leftRegion.contains(yellowCentroid) && !yellowDetectedRight)
+                    {
+                        leftSideValue = 1; // Yellow cones on the left side
+                        yellowDetectedLeft = true;
+                    }
+                    else if (rightRegion.contains(yellowCentroid) && !yellowDetectedLeft)
+                    {
+                        rightSideValue = 1; // Yellow cones on the right side
+                        yellowDetectedRight = true;
+                    }
                 }
 
                 steeringAngle = steeringAlgorithm(leftInfrared, rightInfrared);
