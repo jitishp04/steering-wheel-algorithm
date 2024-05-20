@@ -27,7 +27,6 @@
 // Function to calculate the steering angle 
 double steeringAlgorithm(int direction, double steering, double angularVeloZ, double angularVeloZDerivative)
 {
-    double maxSteeringAngle = 0.28; // Maximum steering angle
     double steeringAngle = steering; // Initial steering angle
 
     steeringAngle = (angularVeloZ * 0.002879) + (angularVeloZDerivative * 0.00097);
