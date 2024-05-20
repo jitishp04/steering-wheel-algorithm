@@ -137,6 +137,10 @@ int32_t main(int32_t argc, char **argv)
     double angularVeloZ = 0.0;
     double steeringAngle = 0;
     double angularVeloZDerivative = 0.0;
+    
+    int totalComparisons = 0;
+    int successfulComparisons = 0;
+    double tolerance = 0.25;
 
     // Parse the command line parameters as we require the user to specify some mandatory information on startup.
     auto commandlineArguments = cluon::getCommandlineArguments(argc, argv);
@@ -236,6 +240,10 @@ int32_t main(int32_t argc, char **argv)
                     cv::Mat wrapped(HEIGHT, WIDTH, CV_8UC4, sharedMemory->data());
                     img = wrapped.clone();
                 }
+
+                std::pair<bool, cluon::data::TimeStamp> pair = sharedMemory->getTimeStamp();
+                cluon::data::TimeStamp sampleT = pair.second;
+                int64_t sampleTimeStamp = cluon::time::toMicroseconds(sampleT);
                 // TODO: Here, you can add some code to check the sampleTimePoint when the current frame was captured.
                 sharedMemory->unlock();
 
@@ -354,8 +362,19 @@ int32_t main(int32_t argc, char **argv)
                 // If you want to access the latest received ground steering, don't forget to lock the mutex:
                 {
                     std::lock_guard<std::mutex> lck(gsrMutex);
-                    std::cout << "main: groundSteering: " << gsr.groundSteering() << std::endl;
-                    std::cout << "our: " << steeringAngle << std::endl;
+                    if (groundSteering != 0)
+                    {
+                        totalComparisons++;
+                        double lowerBound = groundSteering * (1 - tolerance);
+                        double upperBound = groundSteering * (1 + tolerance);
+                        if (steeringAngle >= lowerBound && steeringAngle <= upperBound)
+                        {
+                            successfulComparisons++;
+                        }
+                    }
+                    //std::cout << "main: groundSteering: " << gsr.groundSteering() << std::endl;
+                    //std::cout << "our: " << steeringAngle << std::endl;
+                    std::cout << "Group_15;" << sampleTimeStamp << ";" << steeringAngle << std::endl;
                 }
 
                 // Display image on your screen.
