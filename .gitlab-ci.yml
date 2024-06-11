@@ -1,23 +1,41 @@
-# Copyright (C) 2023 Christian Berger
-
-image: docker:latest
+image: docker:26.0.0
 
 services:
-  - docker:dind
+  - name: docker:26.0.0-dind
 
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
   DOCKER_DRIVER: overlay2
+  DOCKER_BUILDKIT: 1
+  DOCKER_CLI_EXPERIMENTAL: enabled
+  BUILDX_URL: https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
+  BUILDX_BUILDER: Multiplatform_builder
+  BUILDX_PLATFORM: linux/amd64,linux/arm64,linux/arm/v7
 
 stages:
   - build
   - deploy
 
+# Display information before we start the build.
 before_script:
   - docker version
+  - docker info
   - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  - mkdir -p $HOME/.docker/cli-plugins/
+  - wget -O $HOME/.docker/cli-plugins/docker-buildx $BUILDX_URL
+  - chmod a+x $HOME/.docker/cli-plugins/docker-buildx
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - |
+    if ! docker buildx inspect ${BUILDX_BUILDER} > /dev/null 2>&1; then
+      docker buildx create --use --driver docker-container --name ${BUILDX_BUILDER} --platform=${BUILDX_PLATFORM}
+    else
+      docker buildx use ${BUILDX_BUILDER}
+    fi
+  - docker buildx inspect --bootstrap ${BUILDX_BUILDER}
+  - docker buildx ls
 
+# This section describes what shall be done to build and test the project.
 build-and-test:
   stage: build
   only: 
@@ -25,11 +43,16 @@ build-and-test:
   tags:
     - docker-build
   script:
-    - docker buildx create --name mybuilder
-    - docker buildx use mybuilder
-    - docker buildx inspect --bootstrap
-    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t "$CI_REGISTRY_IMAGE" --push .
+    - |
+      if ! docker buildx inspect ${BUILDX_BUILDER} > /dev/null 2>&1; then
+        docker buildx create --use --driver docker-container --name ${BUILDX_BUILDER} --platform=${BUILDX_PLATFORM}
+      else
+        docker buildx use ${BUILDX_BUILDER}
+      fi
+    - docker buildx inspect --bootstrap ${BUILDX_BUILDER}
+    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -f Dockerfile -t "$CI_REGISTRY_IMAGE" --push .
 
+# This section describes what shall be done to deploy artefacts from the project.
 release:
   stage: deploy
   when: on_success
@@ -41,8 +64,12 @@ release:
   tags:
     - docker-build
   script:
-    - echo "Deploying tag $CI_COMMIT_TAG to $CI_REGISTRY_IMAGE"
-    - docker buildx create --name mybuilder
-    - docker buildx use mybuilder
-    - docker buildx inspect --bootstrap
-    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t "$CI_REGISTRY_IMAGE":"$CI_COMMIT_TAG" --push .
+    - |
+      if ! docker buildx inspect ${BUILDX_BUILDER} > /dev/null 2>&1; then
+        docker buildx create --use --driver docker-container --name ${BUILDX_BUILDER} --platform=${BUILDX_PLATFORM}
+      else
+        docker buildx use ${BUILDX_BUILDER}
+      fi
+    - docker buildx inspect --bootstrap ${BUILDX_BUILDER}
+    - docker buildx build --platform=${BUILDX_PLATFORM} -f Dockerfile -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG" --push .
+    - docker buildx imagetools inspect "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
